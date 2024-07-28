@@ -27,8 +27,8 @@ use api::v1::meta::{
     TruncateTableTask as PbTruncateTableTask,
 };
 use api::v1::{
-    AlterExpr, CreateDatabaseExpr, CreateFlowExpr, CreateTableExpr, CreateViewExpr,
-    DropDatabaseExpr, DropFlowExpr, DropTableExpr, DropViewExpr, ExpireAfter,
+    AlterExpr, AlterSchemaExpr, CreateDatabaseExpr, CreateFlowExpr, CreateTableExpr,
+    CreateViewExpr, DropDatabaseExpr, DropFlowExpr, DropTableExpr, DropViewExpr, ExpireAfter,
     QueryContext as PbQueryContext, TruncateTableExpr,
 };
 use base64::engine::general_purpose;
@@ -42,6 +42,7 @@ use table::metadata::{RawTableInfo, TableId};
 use table::table_name::TableName;
 use table::table_reference::TableReference;
 
+use crate::ddl::alter_database;
 use crate::error::{self, Result};
 use crate::key::FlowId;
 
@@ -61,6 +62,7 @@ pub enum DdlTask {
     DropFlow(DropFlowTask),
     CreateView(CreateViewTask),
     DropView(DropViewTask),
+    AlterDatabase(AlterDatabaseTask),
 }
 
 impl DdlTask {
@@ -271,6 +273,9 @@ impl TryFrom<SubmitDdlTaskRequest> for PbDdlTaskRequest {
                 Task::AlterTableTasks(PbAlterTableTasks { tasks })
             }
             DdlTask::CreateDatabase(task) => Task::CreateDatabaseTask(task.try_into()?),
+            DdlTask::AlterDatabase(task) => {
+                todo!()
+            }
             DdlTask::DropDatabase(task) => Task::DropDatabaseTask(task.try_into()?),
             DdlTask::CreateFlow(task) => Task::CreateFlowTask(task.into()),
             DdlTask::DropFlow(task) => Task::DropFlowTask(task.into()),
@@ -765,6 +770,46 @@ impl<'de> Deserialize<'de> for AlterTableTask {
             .map_err(|err| serde::de::Error::custom(err.to_string()))?;
 
         Ok(expr)
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct AlterDatabaseTask {
+    pub alter_database: AlterSchemaExpr,
+}
+
+impl Serialize for AlterDatabaseTask {
+    fn serialize<S>(&self, serializer: S) -> result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let buf = self.alter_database.encode_to_vec();
+        let encoded = general_purpose::STANDARD_NO_PAD.encode(buf);
+        serializer.serialize_str(&encoded)
+    }
+}
+
+impl<'de> Deserialize<'de> for AlterDatabaseTask {
+    fn deserialize<D>(deserializer: D) -> result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let encoded = String::deserialize(deserializer)?;
+        let buf = general_purpose::STANDARD_NO_PAD
+            .decode(encoded)
+            .map_err(|err| serde::de::Error::custom(err.to_string()))?;
+        let expr: AlterSchemaExpr = AlterSchemaExpr::decode(&*buf)
+            .map_err(|err| serde::de::Error::custom(err.to_string()))?;
+
+        let expr = AlterDatabaseTask::from(expr);
+
+        Ok(expr)
+    }
+}
+
+impl From<AlterSchemaExpr> for AlterDatabaseTask {
+    fn from(alter_database: AlterSchemaExpr) -> Self {
+        AlterDatabaseTask { alter_database }
     }
 }
 
