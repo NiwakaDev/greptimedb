@@ -1,0 +1,44 @@
+CREATE DATABASE mydb;
+
+Affected Rows: 1
+
+USE mydb;
+
+Affected Rows: 0
+
+ALTER DATABASE SET OPTIONS ('ttl'='14d');
+
+Error: 2000(InvalidSyntax), sql parser error: Expected TABLE, found: DATABASE at Line: 1, Column 7
+
+SHOW DATABASES;
+
++--------------------+
+| Database           |
++--------------------+
+| greptime_private   |
+| information_schema |
+| mydb               |
+| pg_catalog         |
+| public             |
++--------------------+
+
+SHOW FULL DATABASES;
+
++--------------------+---------+
+| Database           | Options |
++--------------------+---------+
+| greptime_private   |         |
+| information_schema |         |
+| mydb               |         |
+| pg_catalog         |         |
+| public             |         |
++--------------------+---------+
+
+USE public;
+
+Affected Rows: 0
+
+DROP DATABASE mydb;
+
+Affected Rows: 0
+
