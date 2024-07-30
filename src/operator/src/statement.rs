@@ -212,6 +212,9 @@ impl StatementExecutor {
                 .await
             }
             Statement::Alter(alter_table) => self.alter_table(alter_table, query_ctx).await,
+            Statement::AlterDatabase => {
+                todo!()
+            }
             Statement::DropTable(stmt) => {
                 let mut table_names = Vec::with_capacity(stmt.table_names().len());
                 for table_name_stmt in stmt.table_names() {

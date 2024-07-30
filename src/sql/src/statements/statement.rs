@@ -69,6 +69,8 @@ pub enum Statement {
     CreateDatabase(CreateDatabase),
     /// ALTER TABLE
     Alter(AlterTable),
+    /// ALTER DATABASE
+    AlterDatabase,
     // Databases.
     ShowDatabases(ShowDatabases),
     // SHOW TABLES
@@ -128,6 +130,7 @@ impl Display for Statement {
             Statement::DropView(s) => s.fmt(f),
             Statement::CreateDatabase(s) => s.fmt(f),
             Statement::Alter(s) => s.fmt(f),
+            Statement::AlterDatabase => todo!(),
             Statement::ShowDatabases(s) => s.fmt(f),
             Statement::ShowTables(s) => s.fmt(f),
             Statement::ShowTableStatus(s) => s.fmt(f),
