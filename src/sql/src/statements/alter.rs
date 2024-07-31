@@ -101,6 +101,9 @@ impl Display for AlterTableOperation {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Visit, VisitMut)]
+pub struct AlterDatabaseTask {}
+
 #[cfg(test)]
 mod tests {
     use std::assert_matches::assert_matches;

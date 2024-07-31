@@ -212,7 +212,7 @@ impl StatementExecutor {
                 .await
             }
             Statement::Alter(alter_table) => self.alter_table(alter_table, query_ctx).await,
-            Statement::AlterDatabase => {
+            Statement::AlterDatabase(stmt) => {
                 todo!()
             }
             Statement::DropTable(stmt) => {

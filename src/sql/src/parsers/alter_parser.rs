@@ -20,48 +20,33 @@ use sqlparser::tokenizer::Token;
 
 use crate::error::{self, Result};
 use crate::parser::ParserContext;
-use crate::statements::alter::{AlterTable, AlterTableOperation};
+use crate::statements::alter::{AlterDatabaseTask, AlterTable, AlterTableOperation};
 use crate::statements::statement::Statement;
 
 impl<'a> ParserContext<'a> {
     pub(crate) fn parse_alter(&mut self) -> Result<Statement> {
-        /***
         let _ = self.parser.next_token();
         match self.parser.peek_token().token {
             Token::Word(w) => match w.keyword {
-                Keyword::TABLE => self.parse_drop_table(),
-                Keyword::VIEW => self.parse_drop_view(),
-                Keyword::SCHEMA | Keyword::DATABASE => self.parse_drop_database(),
-                Keyword::NoKeyword => {
-                    let uppercase = w.value.to_uppercase();
-                    match uppercase.as_str() {
-                        FLOW => self.parse_drop_flow(),
-                        _ => self.unsupported(w.to_string()),
-                    }
-                }
-                _ => self.unsupported(w.to_string()),
+                Keyword::TABLE => Ok(Statement::Alter(
+                    self.parse_alter_table().context(error::SyntaxSnafu)?,
+                )),
+                Keyword::DATABASE => Ok(Statement::AlterDatabase(
+                    self.parse_alter_database().context(error::SyntaxSnafu)?,
+                )),
+                _ => self.unsupported(w.to_string())?,
             },
-            unexpected => self.unsupported(unexpected.to_string()),
+            unexpected => self.unsupported(unexpected.to_string())?,
         }
-        ***/
-        /***
-        let _ = self.parser.next_token();
-        match self.parser.peek_token().token {
-            Token::Word(w) => match w.keyword {
-                Keyword::TABLE => self.parse_alter_table(),
-                _ => self.unsupported(w.to_string()).context(error::SyntaxSnafu)?
-            },
-            unexpected => self.unsupported(unexpected.to_string())
-        }
-        let alter_table = self.parse_alter_table().context(error::SyntaxSnafu)?;
-        Ok(Statement::Alter(alter_table))
-        ***/
-        todo!()
+    }
+
+    fn parse_alter_database(&mut self) -> std::result::Result<AlterDatabaseTask, ParserError> {
+        self.parser.expect_keywords(&[Keyword::DATABASE])?;
+        Ok(AlterDatabaseTask {})
     }
 
     fn parse_alter_table(&mut self) -> std::result::Result<AlterTable, ParserError> {
-        self.parser
-            .expect_keywords(&[Keyword::ALTER, Keyword::TABLE])?;
+        self.parser.expect_keywords(&[Keyword::TABLE])?;
 
         let raw_table_name = self.parser.parse_object_name(false)?;
         let table_name = Self::canonicalize_object_name(raw_table_name);

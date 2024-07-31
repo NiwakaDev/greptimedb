@@ -471,7 +471,7 @@ pub fn check_permission(
         Statement::Alter(stmt) => {
             validate_param(stmt.table_name(), query_ctx)?;
         }
-        Statement::AlterDatabase => {
+        Statement::AlterDatabase(stmt) => {
             // TODO: implement validate_param
         }
         // set/show variable now only alter/show variable in session
