@@ -31,18 +31,31 @@ impl<'a> ParserContext<'a> {
                 Keyword::TABLE => Ok(Statement::Alter(
                     self.parse_alter_table().context(error::SyntaxSnafu)?,
                 )),
-                Keyword::DATABASE => Ok(Statement::AlterDatabase(
-                    self.parse_alter_database().context(error::SyntaxSnafu)?,
-                )),
+                Keyword::DATABASE => Ok(Statement::AlterDatabase(self.parse_alter_database()?)),
                 _ => self.unsupported(w.to_string())?,
             },
             unexpected => self.unsupported(unexpected.to_string())?,
         }
     }
 
-    fn parse_alter_database(&mut self) -> std::result::Result<AlterDatabaseTask, ParserError> {
+    fn parse_alter_database(&mut self) -> Result<AlterDatabaseTask> {
         self.parser
-            .expect_keywords(&[Keyword::DATABASE, Keyword::SET, Keyword::OPTIONS])?;
+            .expect_keywords(&[Keyword::DATABASE])
+            .context(error::SyntaxSnafu)?;
+        let database_name = self
+            .parse_object_name()
+            .with_context(|_| error::UnexpectedSnafu {
+                sql: self.sql,
+                expected: "a database name",
+                actual: self.peek_token_as_string(),
+            })?;
+        self.parser
+            .expect_keywords(&[Keyword::SET])
+            .context(error::SyntaxSnafu)?;
+        let options = self
+            .parser
+            .parse_options(Keyword::OPTIONS)
+            .context(error::SyntaxSnafu)?;
         Ok(AlterDatabaseTask {})
     }
 
@@ -391,7 +404,7 @@ mod tests {
 
     #[test]
     fn test_parse_alter_database() {
-        let sql = "ALTER DATABASE SET OPTIONS";
+        let sql = "ALTER DATABASE mydb SET OPTIONS (ttl='10s')";
         let result =
             ParserContext::create_with_dialect(sql, &GreptimeDbDialect {}, ParseOptions::default())
                 .unwrap();
