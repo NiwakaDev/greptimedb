@@ -41,7 +41,8 @@ impl<'a> ParserContext<'a> {
     }
 
     fn parse_alter_database(&mut self) -> std::result::Result<AlterDatabaseTask, ParserError> {
-        self.parser.expect_keywords(&[Keyword::DATABASE])?;
+        self.parser
+            .expect_keywords(&[Keyword::DATABASE, Keyword::SET, Keyword::OPTIONS])?;
         Ok(AlterDatabaseTask {})
     }
 
@@ -390,7 +391,7 @@ mod tests {
 
     #[test]
     fn test_parse_alter_database() {
-        let sql = "ALTER DATABASE";
+        let sql = "ALTER DATABASE SET OPTIONS";
         let result =
             ParserContext::create_with_dialect(sql, &GreptimeDbDialect {}, ParseOptions::default())
                 .unwrap();
