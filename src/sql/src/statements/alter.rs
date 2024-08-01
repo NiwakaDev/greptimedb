@@ -18,6 +18,8 @@ use common_query::AddColumnLocation;
 use sqlparser::ast::{ColumnDef, DataType, Ident, ObjectName, TableConstraint};
 use sqlparser_derive::{Visit, VisitMut};
 
+use super::OptionMap;
+
 #[derive(Debug, Clone, PartialEq, Eq, Visit, VisitMut)]
 pub struct AlterTable {
     table_name: ObjectName,
@@ -102,7 +104,15 @@ impl Display for AlterTableOperation {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Visit, VisitMut)]
-pub struct AlterDatabaseTask {}
+pub struct AlterDatabaseTask {
+    pub database_name: ObjectName,
+    pub operation: AlterDatabaseOperation,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Visit, VisitMut)]
+pub enum AlterDatabaseOperation {
+    ChangeOptions(OptionMap),
+}
 
 #[cfg(test)]
 mod tests {

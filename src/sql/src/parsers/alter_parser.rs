@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::collections::HashMap;
+
 use common_query::AddColumnLocation;
 use snafu::ResultExt;
 use sqlparser::keywords::Keyword;
@@ -20,8 +22,11 @@ use sqlparser::tokenizer::Token;
 
 use crate::error::{self, Result};
 use crate::parser::ParserContext;
-use crate::statements::alter::{AlterDatabaseTask, AlterTable, AlterTableOperation};
+use crate::statements::alter::{
+    AlterDatabaseOperation, AlterDatabaseTask, AlterTable, AlterTableOperation,
+};
 use crate::statements::statement::Statement;
+use crate::util::parse_option_string;
 
 impl<'a> ParserContext<'a> {
     pub(crate) fn parse_alter(&mut self) -> Result<Statement> {
@@ -55,8 +60,15 @@ impl<'a> ParserContext<'a> {
         let options = self
             .parser
             .parse_options(Keyword::OPTIONS)
-            .context(error::SyntaxSnafu)?;
-        Ok(AlterDatabaseTask {})
+            .context(error::SyntaxSnafu)?
+            .into_iter()
+            .map(parse_option_string)
+            .collect::<Result<HashMap<String, String>>>()?;
+
+        Ok(AlterDatabaseTask {
+            database_name,
+            operation: AlterDatabaseOperation::ChangeOptions(options.into()),
+        })
     }
 
     fn parse_alter_table(&mut self) -> std::result::Result<AlterTable, ParserError> {
@@ -143,6 +155,7 @@ mod tests {
     use super::*;
     use crate::dialect::GreptimeDbDialect;
     use crate::parser::ParseOptions;
+    use crate::statements::OptionMap;
 
     #[test]
     fn test_parse_alter_add_column() {
@@ -405,10 +418,23 @@ mod tests {
     #[test]
     fn test_parse_alter_database() {
         let sql = "ALTER DATABASE mydb SET OPTIONS (ttl='10s')";
-        let result =
+        let mut result =
             ParserContext::create_with_dialect(sql, &GreptimeDbDialect {}, ParseOptions::default())
                 .unwrap();
         assert_eq!(result.len(), 1);
+        let statement = result.pop().unwrap();
+        match statement {
+            Statement::AlterDatabase(AlterDatabaseTask {
+                database_name,
+                operation,
+            }) => {
+                assert_eq!(database_name.0[0].value, "mydb");
+                let AlterDatabaseOperation::ChangeOptions(options) = operation;
+                assert_eq!(options.len(), 1);
+                assert_eq!(options.get("ttl"), Some(&"10s".to_string()));
+            }
+            _ => unreachable!(),
+        }
     }
 
     #[test]
