@@ -15,18 +15,22 @@
 use std::collections::HashMap;
 
 use common_query::AddColumnLocation;
-use snafu::ResultExt;
+use snafu::{ensure, ResultExt};
 use sqlparser::keywords::Keyword;
 use sqlparser::parser::ParserError;
 use sqlparser::tokenizer::Token;
 
-use crate::error::{self, Result};
+use crate::error::{self, InvalidDatabaseOptionSnafu, Result};
 use crate::parser::ParserContext;
 use crate::statements::alter::{
     AlterDatabaseOperation, AlterDatabaseTask, AlterTable, AlterTableOperation,
 };
 use crate::statements::statement::Statement;
 use crate::util::parse_option_string;
+
+fn validate_database_option(option: &str) -> bool {
+    option == "ttl"
+}
 
 impl<'a> ParserContext<'a> {
     pub(crate) fn parse_alter(&mut self) -> Result<Statement> {
@@ -64,7 +68,14 @@ impl<'a> ParserContext<'a> {
             .into_iter()
             .map(parse_option_string)
             .collect::<Result<HashMap<String, String>>>()?;
-
+        for option in options.iter() {
+            ensure!(
+                validate_database_option(option.0),
+                InvalidDatabaseOptionSnafu {
+                    key: option.0.clone()
+                }
+            )
+        }
         Ok(AlterDatabaseTask {
             database_name,
             operation: AlterDatabaseOperation::ChangeOptions(options.into()),
@@ -435,6 +446,17 @@ mod tests {
             }
             _ => unreachable!(),
         }
+    }
+
+    #[test]
+    fn test_validate_alter_database_options() {
+        let sql = "ALTER DATABASE mydb SET OPTIONS (hello='world', 'ttl'='10s')";
+        let result =
+            ParserContext::create_with_dialect(sql, &GreptimeDbDialect {}, ParseOptions::default());
+        assert!(matches!(
+            result,
+            Err(error::Error::InvalidDatabaseOption { .. })
+        ));
     }
 
     #[test]
