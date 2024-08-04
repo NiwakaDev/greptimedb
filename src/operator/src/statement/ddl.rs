@@ -29,7 +29,7 @@ use common_meta::instruction::CacheIdent;
 use common_meta::key::schema_name::{SchemaNameKey, SchemaNameValue};
 use common_meta::key::NAME_PATTERN;
 use common_meta::rpc::ddl::{
-    CreateFlowTask, DdlTask, DropFlowTask, DropViewTask, SubmitDdlTaskRequest,
+    AlterDatabaseTask, CreateFlowTask, DdlTask, DropFlowTask, DropViewTask, SubmitDdlTaskRequest,
     SubmitDdlTaskResponse,
 };
 use common_meta::rpc::router::{Partition, Partition as MetaPartition};
@@ -51,7 +51,7 @@ use regex::Regex;
 use session::context::QueryContextRef;
 use session::table_name::table_idents_to_full_name;
 use snafu::{ensure, OptionExt, ResultExt};
-use sql::statements::alter::{AlterDatabaseTask, AlterTable};
+use sql::statements::alter::{AlterDatabaseTask as AlterDatabaseStmt, AlterTable};
 use sql::statements::create::{
     CreateExternalTable, CreateFlow, CreateTable, CreateTableLike, CreateView, Partitions,
 };
@@ -806,7 +806,7 @@ impl StatementExecutor {
     pub async fn alter_database(
         &self,
         query_context: QueryContextRef,
-        alter_database_task: AlterDatabaseTask,
+        alter_database_task: AlterDatabaseStmt,
     ) -> Result<Output> {
         todo!();
     }
@@ -1211,6 +1211,22 @@ impl StatementExecutor {
             task: DdlTask::new_create_database(catalog, database, create_if_not_exists, options),
         };
 
+        self.procedure_executor
+            .submit_ddl_task(&ExecutorContext::default(), request)
+            .await
+            .context(error::ExecuteDdlSnafu)
+    }
+
+    async fn alter_database_procedure(
+        &self,
+        query_context: QueryContextRef,
+    ) -> Result<SubmitDdlTaskResponse> {
+        let request = SubmitDdlTaskRequest {
+            query_context: query_context.clone(),
+            task: DdlTask::AlterDatabase(AlterDatabaseTask {
+                alter_database: expr_factory::to_alter_database_expr(&query_context)?,
+            }),
+        };
         self.procedure_executor
             .submit_ddl_task(&ExecutorContext::default(), request)
             .await

@@ -16,11 +16,12 @@ use std::collections::{HashMap, HashSet};
 
 use api::helper::ColumnDataTypeWrapper;
 use api::v1::alter_expr::Kind;
+use api::v1::alter_schema_expr::Kind as AlterSchemaKind;
 use api::v1::column_def::options_from_column_schema;
 use api::v1::{
-    AddColumn, AddColumns, AlterExpr, ChangeColumnType, ChangeColumnTypes, ColumnDataType,
-    ColumnDataTypeExtension, CreateFlowExpr, CreateTableExpr, CreateViewExpr, DropColumn,
-    DropColumns, ExpireAfter, RenameTable, SemanticType, TableName,
+    AddColumn, AddColumns, AlterExpr, AlterSchemaExpr, ChangeColumnType, ChangeColumnTypes,
+    ChangeSchemaOptions, ColumnDataType, ColumnDataTypeExtension, CreateFlowExpr, CreateTableExpr,
+    CreateViewExpr, DropColumn, DropColumns, ExpireAfter, RenameTable, SemanticType, TableName,
 };
 use common_error::ext::BoxedError;
 use common_grpc_expr::util::ColumnExpr;
@@ -427,6 +428,16 @@ pub fn column_schemas_to_defs(
             })
         })
         .collect()
+}
+
+pub(crate) fn to_alter_database_expr(query_ctx: &QueryContextRef) -> Result<AlterSchemaExpr> {
+    Ok(AlterSchemaExpr {
+        catalog_name: query_ctx.current_catalog().to_string(),
+        schema_name: query_ctx.current_schema(),
+        kind: Some(AlterSchemaKind::SchemaOptions(ChangeSchemaOptions {
+            options: HashMap::new(),
+        })),
+    })
 }
 
 pub(crate) fn to_alter_expr(

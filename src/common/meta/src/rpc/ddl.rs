@@ -151,6 +151,11 @@ impl DdlTask {
         })
     }
 
+    /// Creates a [`DdlTask`] to alter a database.
+    pub fn new_alter_database() -> Self {
+        todo!();
+    }
+
     /// Creates a [`DdlTask`] to alter a table.
     pub fn new_alter_table(alter_table: AlterExpr) -> Self {
         DdlTask::AlterTable(AlterTableTask { alter_table })
