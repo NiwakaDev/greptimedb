@@ -808,7 +808,9 @@ impl StatementExecutor {
         query_context: QueryContextRef,
         alter_database_task: AlterDatabaseStmt,
     ) -> Result<Output> {
-        todo!();
+        self.alter_database_procedure(alter_database_task, query_context)
+            .await?;
+        Ok(Output::new_with_affected_rows(0))
     }
 
     #[tracing::instrument(skip_all)]
@@ -1219,12 +1221,16 @@ impl StatementExecutor {
 
     async fn alter_database_procedure(
         &self,
+        alter_database: AlterDatabaseStmt,
         query_context: QueryContextRef,
     ) -> Result<SubmitDdlTaskResponse> {
         let request = SubmitDdlTaskRequest {
             query_context: query_context.clone(),
             task: DdlTask::AlterDatabase(AlterDatabaseTask {
-                alter_database: expr_factory::to_alter_database_expr(&query_context)?,
+                alter_database: expr_factory::to_alter_database_expr(
+                    alter_database,
+                    &query_context,
+                )?,
             }),
         };
         self.procedure_executor

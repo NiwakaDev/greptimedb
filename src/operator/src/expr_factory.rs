@@ -37,7 +37,9 @@ use session::context::QueryContextRef;
 use session::table_name::table_idents_to_full_name;
 use snafu::{ensure, OptionExt, ResultExt};
 use sql::ast::{ColumnOption, TableConstraint};
-use sql::statements::alter::{AlterTable, AlterTableOperation};
+use sql::statements::alter::{
+    AlterDatabaseOperation, AlterDatabaseTask as AlterDatabaseStmt, AlterTable, AlterTableOperation,
+};
 use sql::statements::create::{
     Column as SqlColumn, CreateExternalTable, CreateFlow, CreateTable, CreateView, TIME_INDEX,
 };
@@ -430,14 +432,19 @@ pub fn column_schemas_to_defs(
         .collect()
 }
 
-pub(crate) fn to_alter_database_expr(query_ctx: &QueryContextRef) -> Result<AlterSchemaExpr> {
-    Ok(AlterSchemaExpr {
-        catalog_name: query_ctx.current_catalog().to_string(),
-        schema_name: query_ctx.current_schema(),
-        kind: Some(AlterSchemaKind::SchemaOptions(ChangeSchemaOptions {
-            options: HashMap::new(),
-        })),
-    })
+pub(crate) fn to_alter_database_expr(
+    alter_database: AlterDatabaseStmt,
+    query_ctx: &QueryContextRef,
+) -> Result<AlterSchemaExpr> {
+    match alter_database.operation {
+        AlterDatabaseOperation::ChangeOptions(options) => Ok(AlterSchemaExpr {
+            catalog_name: query_ctx.current_catalog().to_string(),
+            schema_name: query_ctx.current_schema(),
+            kind: Some(AlterSchemaKind::SchemaOptions(ChangeSchemaOptions {
+                options: HashMap::new(),
+            })),
+        }),
+    }
 }
 
 pub(crate) fn to_alter_expr(
