@@ -27,7 +27,7 @@ use crate::error::{self, Error, InvalidTableMetadataSnafu, ParseOptionSnafu, Res
 use crate::key::{MetaKey, SCHEMA_NAME_KEY_PATTERN, SCHEMA_NAME_KEY_PREFIX};
 use crate::kv_backend::KvBackendRef;
 use crate::range_stream::{PaginationStream, DEFAULT_PAGE_SIZE};
-use crate::rpc::store::RangeRequest;
+use crate::rpc::store::{PutRequest, RangeRequest};
 use crate::rpc::KeyValue;
 
 const OPT_KEY_TTL: &str = "ttl";
@@ -185,9 +185,17 @@ impl SchemaManager {
         Ok(())
     }
 
+    pub async fn update(&self, schema: SchemaNameKey<'_>, value: SchemaNameValue) -> Result<()> {
+        let raw_key = schema.to_bytes();
+        let raw_value = value.try_as_raw_value()?;
+        self.kv_backend
+            .put(PutRequest::new().with_key(raw_key).with_value(raw_value))
+            .await?;
+        Ok(())
+    }
+
     pub async fn exists(&self, schema: SchemaNameKey<'_>) -> Result<bool> {
         let raw_key = schema.to_bytes();
-
         self.kv_backend.exists(&raw_key).await
     }
 

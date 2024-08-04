@@ -15,12 +15,14 @@
 use async_trait::async_trait;
 use common_procedure::error::{Result as ProcedureResult, ToJsonSnafu};
 use common_procedure::{Context, LockKey, Procedure, Status};
+use common_telemetry::{info, warn};
 use serde::{Deserialize, Serialize};
-use snafu::ResultExt;
+use snafu::{ensure, ResultExt};
 
 use super::utils::handle_retry_error;
 use crate::ddl::DdlContext;
-use crate::error::Result;
+use crate::error::{self, Result};
+use crate::key::schema_name::{SchemaName, SchemaNameKey};
 use crate::lock_key::{CatalogLock, SchemaLock};
 use crate::rpc::ddl::AlterDatabaseTask;
 use crate::ClusterId;
@@ -43,12 +45,27 @@ impl AlterDatabaseProcedure {
         }
     }
 
-    async fn on_prepare(&self) -> Result<Status> {
-        todo!()
+    async fn on_prepare(&mut self) -> Result<Status> {
+        self.data.state = AlterDatabaseState::UpdateMetadata;
+        let exist = self
+            .context
+            .table_metadata_manager
+            .schema_manager()
+            .exists(SchemaNameKey {
+                catalog: &self.data.task.alter_database.catalog_name,
+                schema: &self.data.task.alter_database.schema_name,
+            })
+            .await?;
+        //ensure!(!exist, error::SchemaAlreadyExistsSnafu{catalog: , schema: });
+        Ok(Status::Executing { persist: true })
     }
 
-    async fn on_update_metadata(&self) -> Result<Status> {
-        todo!()
+    async fn on_update_metadata(&mut self) -> Result<Status> {
+        self.context
+            .table_metadata_manager
+            .update_schema_info()
+            .await?;
+        Ok(Status::done())
     }
 }
 

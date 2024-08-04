@@ -909,6 +909,14 @@ impl TableMetadataManager {
         Ok(())
     }
 
+    /// Updates the database options.
+    pub async fn update_schema_info(&self) -> Result<()> {
+        warn!("Not implemented: update_schema_info");
+        //self.schema_manager.update(schema, value);
+
+        Ok(())
+    }
+
     /// Updates table info and returns an error if different metadata exists.
     pub async fn update_table_info(
         &self,

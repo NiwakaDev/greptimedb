@@ -804,7 +804,7 @@ impl ProcedureExecutor for DdlManager {
                     handle_create_database_task(self, cluster_id, create_database_task).await
                 }
                 AlterDatabase(alter_database_task) => {
-                    todo!()
+                    handle_alter_database_task(self, cluster_id, alter_database_task).await
                 }
                 DropDatabase(drop_database_task) => {
                     handle_drop_database_task(self, cluster_id, drop_database_task).await
