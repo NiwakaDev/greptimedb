@@ -439,7 +439,7 @@ pub(crate) fn to_alter_database_expr(
     match alter_database.operation {
         AlterDatabaseOperation::ChangeOptions(options) => Ok(AlterSchemaExpr {
             catalog_name: query_ctx.current_catalog().to_string(),
-            schema_name: query_ctx.current_schema(),
+            schema_name: alter_database.database_name.to_string(),
             kind: Some(AlterSchemaKind::SchemaOptions(ChangeSchemaOptions {
                 options: options.into_map(),
             })),

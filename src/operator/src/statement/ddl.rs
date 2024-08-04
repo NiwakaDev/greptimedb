@@ -1224,6 +1224,10 @@ impl StatementExecutor {
         alter_database: AlterDatabaseStmt,
         query_context: QueryContextRef,
     ) -> Result<SubmitDdlTaskResponse> {
+        info!(
+            "alter_database: {:?}, at StatementExecutor::alter_database_procedure",
+            alter_database
+        );
         let request = SubmitDdlTaskRequest {
             query_context: query_context.clone(),
             task: DdlTask::AlterDatabase(AlterDatabaseTask {
