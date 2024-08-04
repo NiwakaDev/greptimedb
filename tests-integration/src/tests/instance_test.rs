@@ -563,6 +563,42 @@ async fn test_execute_create(instance: Arc<dyn MockInstance>) {
 }
 
 #[apply(both_instances_cases)]
+async fn test_alter_database(instance: Arc<dyn MockInstance>) {
+    let instance = instance.frontend();
+
+    let sql = "CREATE DATABASE test with(ttl='7d');";
+    let _ = execute_sql(&instance, sql).await.data;
+
+    let sql = "SHOW FULL DATABASES";
+    let output = execute_sql(&instance, sql).await.data;
+    let expect = "\
++--------------------+-------------+
+| Database           | Options     |
++--------------------+-------------+
+| greptime_private   |             |
+| information_schema |             |
+| pg_catalog         |             |
+| public             |             |
+| test               | ttl='7days' |
++--------------------+-------------+";
+    check_output_stream(output, expect).await;
+
+    let sql = "ALTER DATABASE test SET OPTIONS (ttl='1d')";
+    let output = execute_sql(&instance, sql).await.data;
+    let expect = "\
++--------------------+-------------+
+| Database           | Options     |
++--------------------+-------------+
+| greptime_private   |             |
+| information_schema |             |
+| pg_catalog         |             |
+| public             |             |
+| test               | ttl='1days' |
++--------------------+-------------+";
+    check_output_stream(output, expect).await;
+}
+
+#[apply(both_instances_cases)]
 async fn test_execute_external_create(instance: Arc<dyn MockInstance>) {
     let instance = instance.frontend();
 
