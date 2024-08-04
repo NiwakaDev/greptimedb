@@ -51,7 +51,7 @@ use regex::Regex;
 use session::context::QueryContextRef;
 use session::table_name::table_idents_to_full_name;
 use snafu::{ensure, OptionExt, ResultExt};
-use sql::statements::alter::AlterTable;
+use sql::statements::alter::{AlterDatabaseTask, AlterTable};
 use sql::statements::create::{
     CreateExternalTable, CreateFlow, CreateTable, CreateTableLike, CreateView, Partitions,
 };
@@ -800,6 +800,15 @@ impl StatementExecutor {
                 .context(error::InvalidateTableCacheSnafu)?;
         }
         Ok(Output::new_with_affected_rows(0))
+    }
+
+    #[tracing::instrument(skip_all)]
+    pub async fn alter_database(
+        &self,
+        query_context: QueryContextRef,
+        alter_database_task: AlterDatabaseTask,
+    ) -> Result<Output> {
+        todo!();
     }
 
     #[tracing::instrument(skip_all)]

@@ -212,9 +212,6 @@ impl StatementExecutor {
                 .await
             }
             Statement::Alter(alter_table) => self.alter_table(alter_table, query_ctx).await,
-            Statement::AlterDatabase(stmt) => {
-                todo!()
-            }
             Statement::DropTable(stmt) => {
                 let mut table_names = Vec::with_capacity(stmt.table_names().len());
                 for table_name_stmt in stmt.table_names() {
@@ -227,6 +224,7 @@ impl StatementExecutor {
                 self.drop_tables(&table_names[..], stmt.drop_if_exists(), query_ctx.clone())
                     .await
             }
+            Statement::AlterDatabase(stmt) => self.alter_database(query_ctx, stmt).await,
             Statement::DropDatabase(stmt) => {
                 self.drop_database(
                     query_ctx.current_catalog().to_string(),
