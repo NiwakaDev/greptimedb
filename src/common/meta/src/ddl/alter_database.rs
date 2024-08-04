@@ -56,7 +56,13 @@ impl AlterDatabaseProcedure {
                 schema: &self.data.task.alter_database.schema_name,
             })
             .await?;
-        //ensure!(!exist, error::SchemaAlreadyExistsSnafu{catalog: , schema: });
+        ensure!(
+            !exist,
+            error::SchemaAlreadyExistsSnafu {
+                catalog: self.data.task.alter_database.catalog_name.clone(),
+                schema: self.data.task.alter_database.schema_name.clone()
+            }
+        );
         Ok(Status::Executing { persist: true })
     }
 
