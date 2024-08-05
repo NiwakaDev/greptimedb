@@ -910,10 +910,14 @@ impl TableMetadataManager {
     }
 
     /// Updates the database options.
-    pub async fn update_schema_info(&self) -> Result<()> {
-        warn!("Not implemented: update_schema_info");
-        //self.schema_manager.update(schema, value);
-
+    /// The Caller MUST ensure that the options are valid.
+    pub async fn update_schema_info(
+        &self,
+        catalog_name: String,
+        schema_name: String,
+        options: HashMap<String, String>,
+    ) -> Result<()> {
+        //self.schema_manager.update(SchemaNameKey { catalog: &catalog_name, schema: &schema_name }, SchemaNameValue { ttl: () });
         Ok(())
     }
 

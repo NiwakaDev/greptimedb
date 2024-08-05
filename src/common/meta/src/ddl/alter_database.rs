@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use api::v1::alter_schema_expr::Kind;
 use async_trait::async_trait;
 use common_procedure::error::{Result as ProcedureResult, ToJsonSnafu};
 use common_procedure::{Context, LockKey, Procedure, Status};
@@ -66,10 +67,16 @@ impl AlterDatabaseProcedure {
     }
 
     async fn on_update_metadata(&mut self) -> Result<Status> {
-        self.context
-            .table_metadata_manager
-            .update_schema_info()
-            .await?;
+        if let Some(Kind::SchemaOptions(options)) = &self.data.task.alter_database.kind {
+            self.context
+                .table_metadata_manager
+                .update_schema_info(
+                    self.data.task.alter_database.catalog_name.clone(),
+                    self.data.task.alter_database.schema_name.clone(),
+                    options.options.clone(),
+                )
+                .await?;
+        }
         Ok(Status::done())
     }
 }
