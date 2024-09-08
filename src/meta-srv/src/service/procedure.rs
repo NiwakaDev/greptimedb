@@ -71,11 +71,12 @@ impl procedure_service_server::ProcedureService for Metasrv {
                 param: "query_context",
             })?
             .into();
+        println!("PbTaskからDdlTaskに変換する前");
         let task: DdlTask = task
             .context(error::MissingRequiredParameterSnafu { param: "task" })?
             .try_into()
             .context(error::ConvertProtoDataSnafu)?;
-
+        println!("PbTaskからDdlTaskに変換した後");
         let resp = self
             .procedure_executor()
             .submit_ddl_task(

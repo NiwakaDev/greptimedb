@@ -569,7 +569,7 @@ async fn test_alter_database(instance: Arc<dyn MockInstance>) {
     let sql = "CREATE DATABASE test with(ttl='7d');";
     let _ = execute_sql(&instance, sql).await.data;
 
-    let sql = "SHOW FULL DATABASES";
+    let sql = "SHOW FULL DATABASES;";
     let output = execute_sql(&instance, sql).await.data;
     let expect = "\
 +--------------------+-------------+
@@ -583,7 +583,7 @@ async fn test_alter_database(instance: Arc<dyn MockInstance>) {
 +--------------------+-------------+";
     check_output_stream(output, expect).await;
 
-    let sql = "ALTER DATABASE test SET OPTIONS (ttl='1d')";
+    let sql = "ALTER DATABASE test SET OPTIONS (ttl='1d');";
     let output = execute_sql(&instance, sql).await.data;
     let expect = "\
 +--------------------+-------------+
@@ -618,6 +618,7 @@ async fn test_execute_external_create(instance: Arc<dyn MockInstance>) {
     )
     .await
     .data;
+
     assert!(matches!(output, OutputData::AffectedRows(0)));
 
     let output = execute_sql(

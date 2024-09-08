@@ -573,6 +573,7 @@ async fn handle_alter_database_task(
     cluster_id: ClusterId,
     alter_database_task: AlterDatabaseTask,
 ) -> Result<SubmitDdlTaskResponse> {
+    info!("handle_alter_database_taskが呼ばれた");
     let (id, _) = ddl_manager
         .submit_alter_database(cluster_id, alter_database_task)
         .await?;

@@ -17,19 +17,20 @@ use std::result;
 
 use api::v1::meta::ddl_task_request::Task;
 use api::v1::meta::{
-    AlterTableTask as PbAlterTableTask, AlterTableTasks as PbAlterTableTasks,
-    CreateDatabaseTask as PbCreateDatabaseTask, CreateFlowTask as PbCreateFlowTask,
-    CreateTableTask as PbCreateTableTask, CreateTableTasks as PbCreateTableTasks,
-    CreateViewTask as PbCreateViewTask, DdlTaskRequest as PbDdlTaskRequest,
-    DdlTaskResponse as PbDdlTaskResponse, DropDatabaseTask as PbDropDatabaseTask,
-    DropFlowTask as PbDropFlowTask, DropTableTask as PbDropTableTask,
-    DropTableTasks as PbDropTableTasks, DropViewTask as PbDropViewTask, Partition, ProcedureId,
+    AlterSchemaTask as PbAlterSchemaTask, AlterTableTask as PbAlterTableTask,
+    AlterTableTasks as PbAlterTableTasks, CreateDatabaseTask as PbCreateDatabaseTask,
+    CreateFlowTask as PbCreateFlowTask, CreateTableTask as PbCreateTableTask,
+    CreateTableTasks as PbCreateTableTasks, CreateViewTask as PbCreateViewTask,
+    DdlTaskRequest as PbDdlTaskRequest, DdlTaskResponse as PbDdlTaskResponse,
+    DropDatabaseTask as PbDropDatabaseTask, DropFlowTask as PbDropFlowTask,
+    DropTableTask as PbDropTableTask, DropTableTasks as PbDropTableTasks,
+    DropViewTask as PbDropViewTask, Partition, ProcedureId,
     TruncateTableTask as PbTruncateTableTask,
 };
 use api::v1::{
-    AlterExpr, AlterSchemaExpr, CreateDatabaseExpr, CreateFlowExpr, CreateTableExpr,
-    CreateViewExpr, DropDatabaseExpr, DropFlowExpr, DropTableExpr, DropViewExpr, ExpireAfter,
-    QueryContext as PbQueryContext, TruncateTableExpr,
+    alter_schema_expr, AlterExpr, AlterSchemaExpr, ChangeSchemaOptions, CreateDatabaseExpr,
+    CreateFlowExpr, CreateTableExpr, CreateViewExpr, DropDatabaseExpr, DropFlowExpr, DropTableExpr,
+    DropViewExpr, ExpireAfter, QueryContext as PbQueryContext, TruncateTableExpr,
 };
 use base64::engine::general_purpose;
 use base64::Engine as _;
@@ -189,6 +190,9 @@ impl TryFrom<Task> for DdlTask {
     type Error = error::Error;
     fn try_from(task: Task) -> Result<Self> {
         match task {
+            Task::AlterSchemaTask(alter_schema) => {
+                Ok(DdlTask::AlterDatabase(alter_schema.try_into()?))
+            }
             Task::CreateTableTask(create_table) => {
                 Ok(DdlTask::CreateTable(create_table.try_into()?))
             }
@@ -278,9 +282,7 @@ impl TryFrom<SubmitDdlTaskRequest> for PbDdlTaskRequest {
                 Task::AlterTableTasks(PbAlterTableTasks { tasks })
             }
             DdlTask::CreateDatabase(task) => Task::CreateDatabaseTask(task.try_into()?),
-            DdlTask::AlterDatabase(task) => {
-                todo!()
-            }
+            DdlTask::AlterDatabase(task) => Task::AlterSchemaTask(task.try_into()?),
             DdlTask::DropDatabase(task) => Task::DropDatabaseTask(task.try_into()?),
             DdlTask::CreateFlow(task) => Task::CreateFlowTask(task.into()),
             DdlTask::DropFlow(task) => Task::DropFlowTask(task.into()),
@@ -809,6 +811,32 @@ impl<'de> Deserialize<'de> for AlterDatabaseTask {
         let expr = AlterDatabaseTask::from(expr);
 
         Ok(expr)
+    }
+}
+
+impl TryFrom<AlterDatabaseTask> for PbAlterSchemaTask {
+    type Error = error::Error;
+    fn try_from(value: AlterDatabaseTask) -> result::Result<Self, Self::Error> {
+        let options = alter_schema_expr::Kind::SchemaOptions(ChangeSchemaOptions {
+            options: HashMap::new(),
+        });
+        let alter_schema = AlterSchemaExpr {
+            catalog_name: value.alter_database.catalog_name,
+            schema_name: value.alter_database.schema_name,
+            kind: Some(options),
+        };
+        Ok(PbAlterSchemaTask {
+            alter_schema: Some(alter_schema),
+        })
+    }
+}
+
+impl TryFrom<PbAlterSchemaTask> for AlterDatabaseTask {
+    type Error = error::Error;
+    fn try_from(value: PbAlterSchemaTask) -> result::Result<Self, Self::Error> {
+        let alter_database = value.alter_schema.unwrap();
+
+        Ok(AlterDatabaseTask { alter_database })
     }
 }
 

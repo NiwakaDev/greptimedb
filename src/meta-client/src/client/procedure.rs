@@ -268,7 +268,7 @@ impl Inner {
             self.role,
             TracingContext::from_current_span().to_w3c(),
         );
-
+        info!("submit_dd_taskが走った。");
         self.with_retry(
             "submit ddl task",
             move |mut client| {

@@ -1237,10 +1237,14 @@ impl StatementExecutor {
                 )?,
             }),
         };
-        self.procedure_executor
+        info!("ここまできた");
+        let response = self
+            .procedure_executor
             .submit_ddl_task(&ExecutorContext::default(), request)
             .await
-            .context(error::ExecuteDdlSnafu)
+            .context(error::ExecuteDdlSnafu);
+        info!("ここまできた2");
+        response
     }
 }
 
