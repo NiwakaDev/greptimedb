@@ -917,7 +917,17 @@ impl TableMetadataManager {
         schema_name: String,
         options: HashMap<String, String>,
     ) -> Result<()> {
-        //self.schema_manager.update(SchemaNameKey { catalog: &catalog_name, schema: &schema_name }, SchemaNameValue { ttl: () });
+        let from_value = SchemaNameValue::try_from(&options).unwrap();
+        println!("メタデータ更新, value: {:?}, options: {:?}", from_value, options);
+        self.schema_manager
+            .update(
+                SchemaNameKey {
+                    catalog: &catalog_name,
+                    schema: &schema_name,
+                },
+                from_value,
+            )
+            .await?;
         Ok(())
     }
 

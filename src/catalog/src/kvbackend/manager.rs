@@ -230,9 +230,10 @@ impl CatalogManager for KvBackendCatalogManager {
             .system_catalog
             .table(catalog_name, schema_name, table_name)
         {
+            println!("CatalogManager::tableでOk(Some(table))");
             return Ok(Some(table));
         }
-
+        println!("CatalogManager::tableでキャッシュ");
         let table_cache: TableCacheRef = self.cache_registry.get().context(CacheNotFoundSnafu {
             name: "table_cache",
         })?;
@@ -357,6 +358,10 @@ impl SystemCatalog {
 
     fn table(&self, catalog: &str, schema: &str, table_name: &str) -> Option<TableRef> {
         if schema == INFORMATION_SCHEMA_NAME {
+            // キャッシュされているから正しい値が取得できない。
+            //self.catalog_cache.invalidate_all();
+            println!("キャッシュシステム, schema: {}, table_name: {}", schema, table_name);
+            //self.catalog_cache.invalidate(catalog);
             let information_schema_provider =
                 self.catalog_cache.get_with_by_ref(catalog, move || {
                     Arc::new(InformationSchemaProvider::new(

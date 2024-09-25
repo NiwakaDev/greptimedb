@@ -36,6 +36,7 @@ use common_query::prelude::GREPTIME_TIMESTAMP;
 use common_query::Output;
 use common_recordbatch::adapter::RecordBatchStreamAdapter;
 use common_recordbatch::RecordBatches;
+use common_telemetry::info;
 use common_time::timezone::get_timezone;
 use common_time::Timestamp;
 use datafusion::common::ScalarValue;
@@ -175,7 +176,7 @@ pub async fn show_databases(
     } else {
         vec![(schemata::SCHEMA_NAME, SCHEMAS_COLUMN)]
     };
-
+    info!("sho full実行");
     let filters = vec![col(schemata::CATALOG_NAME).eq(lit(query_ctx.current_catalog()))];
     let like_field = Some(schemata::SCHEMA_NAME);
     let sort = vec![col(schemata::SCHEMA_NAME).sort(true, true)];
@@ -230,7 +231,7 @@ async fn query_from_information_schema_table(
                 table_name,
             ),
         })?;
-
+    println!("catalog name: {}, name: {}", table.table_info().catalog_name, table.table_info().full_table_name());
     let DataFrame::DataFusion(dataframe) = query_engine.read_table(table)?;
 
     // Apply select

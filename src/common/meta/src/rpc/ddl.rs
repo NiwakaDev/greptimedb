@@ -817,9 +817,7 @@ impl<'de> Deserialize<'de> for AlterDatabaseTask {
 impl TryFrom<AlterDatabaseTask> for PbAlterSchemaTask {
     type Error = error::Error;
     fn try_from(value: AlterDatabaseTask) -> result::Result<Self, Self::Error> {
-        let options = alter_schema_expr::Kind::SchemaOptions(ChangeSchemaOptions {
-            options: HashMap::new(),
-        });
+        let options = value.alter_database.kind.unwrap();
         let alter_schema = AlterSchemaExpr {
             catalog_name: value.alter_database.catalog_name,
             schema_name: value.alter_database.schema_name,

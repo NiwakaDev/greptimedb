@@ -20,6 +20,7 @@ use common_error::ext::BoxedError;
 use common_meta::key::schema_name::SchemaNameKey;
 use common_recordbatch::adapter::RecordBatchStreamAdapter;
 use common_recordbatch::{RecordBatch, SendableRecordBatchStream};
+use common_telemetry::info;
 use datafusion::execution::TaskContext;
 use datafusion::physical_plan::stream::RecordBatchStreamAdapter as DfRecordBatchStreamAdapter;
 use datafusion::physical_plan::streaming::PartitionStream as DfPartitionStream;
@@ -105,6 +106,7 @@ impl InformationTable for InformationSchemaSchemata {
     }
 
     fn to_stream(&self, request: ScanRequest) -> Result<SendableRecordBatchStream> {
+        println!("InformationTable::to_stream");
         let schema = self.schema.arrow_schema().clone();
         let mut builder = self.builder();
         let stream = Box::pin(DfRecordBatchStreamAdapter::new(
@@ -162,6 +164,7 @@ impl InformationSchemaSchemataBuilder {
 
     /// Construct the `information_schema.schemata` virtual table
     async fn make_schemata(&mut self, request: Option<ScanRequest>) -> Result<RecordBatch> {
+        info!("InformationSchemaSchemataBuilder::make_schemata");
         let catalog_name = self.catalog_name.clone();
         let catalog_manager = self
             .catalog_manager
@@ -172,6 +175,7 @@ impl InformationSchemaSchemataBuilder {
 
         for schema_name in catalog_manager.schema_names(&catalog_name).await? {
             let opts = if let Some(table_metadata_manager) = &table_metadata_manager {
+                println!("table_metadata_managerがNoneでない");
                 table_metadata_manager
                     .schema_manager()
                     .get(SchemaNameKey::new(&catalog_name, &schema_name))
@@ -181,8 +185,11 @@ impl InformationSchemaSchemataBuilder {
                     // table_metadata_manager and we return None
                     .map(|schema_opts| format!("{schema_opts}"))
             } else {
+                println!("table_metadata_managerがNone");
                 None
             };
+
+            println!("schema_name: {}, opts: {:?}", schema_name, opts);
 
             self.add_schema(
                 &predicates,

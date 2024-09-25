@@ -282,7 +282,7 @@ impl StartCommand {
         let cache_max_capacity = meta_client_options.metadata_cache_max_capacity;
         let cache_ttl = meta_client_options.metadata_cache_ttl;
         let cache_tti = meta_client_options.metadata_cache_tti;
-
+        println!("cache_ttl: {:?}", cache_ttl);
         let cluster_id = 0; // (TODO: jeremy): It is currently a reserved field and has not been enabled.
         let meta_client = meta_client::create_meta_client(
             cluster_id,

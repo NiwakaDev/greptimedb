@@ -138,6 +138,7 @@ impl KvBackend for CachedMetaKvBackend {
     }
 
     async fn put(&self, req: PutRequest) -> Result<PutResponse> {
+        println!("CachedMetaKvBackend::put");
         let key = &req.key.clone();
 
         let ret = self.kv_backend.put(req).await;
@@ -150,6 +151,7 @@ impl KvBackend for CachedMetaKvBackend {
     }
 
     async fn batch_put(&self, req: BatchPutRequest) -> Result<BatchPutResponse> {
+        println!("CachedMetaKvBackend::batch_put");
         let keys = req
             .kvs
             .iter()
@@ -193,6 +195,7 @@ impl KvBackend for CachedMetaKvBackend {
 
         if !self.validate_version(pre_version) {
             for key in miss_keys.iter() {
+                println!("キャッシュのinvalidateが走った");
                 self.cache.invalidate(key).await;
             }
         }
@@ -294,6 +297,7 @@ impl KvBackend for CachedMetaKvBackend {
             .as_ref()
             .map_or(false, |v| !self.validate_version(*v))
         {
+            println!("キャッシュのinvalidateが走った");
             self.cache.invalidate(key).await;
         }
 

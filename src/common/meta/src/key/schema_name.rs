@@ -200,6 +200,7 @@ impl SchemaManager {
     }
 
     pub async fn get(&self, schema: SchemaNameKey<'_>) -> Result<Option<SchemaNameValue>> {
+        println!("SchemaManager::getが走った");
         let raw_key = schema.to_bytes();
         let value = self.kv_backend.get(&raw_key).await?;
         value

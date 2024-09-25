@@ -808,6 +808,7 @@ impl StatementExecutor {
         query_context: QueryContextRef,
         alter_database_task: AlterDatabaseStmt,
     ) -> Result<Output> {
+        println!("alter_databae_task: {:?}", alter_database_task);
         self.alter_database_procedure(alter_database_task, query_context)
             .await?;
         Ok(Output::new_with_affected_rows(0))
@@ -1237,7 +1238,7 @@ impl StatementExecutor {
                 )?,
             }),
         };
-        info!("ここまできた");
+        info!("ここまできた, alter_tasl: {:?}", request.task);
         let response = self
             .procedure_executor
             .submit_ddl_task(&ExecutorContext::default(), request)
