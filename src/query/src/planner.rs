@@ -62,6 +62,10 @@ impl DfLogicalPlanner {
 
     #[tracing::instrument(skip_all)]
     async fn plan_sql(&self, stmt: &Statement, query_ctx: QueryContextRef) -> Result<LogicalPlan> {
+        println!(
+            "DfLogicalPlanner::plan_sql, LogicalPlanの作成中..., stmt: {:?}",
+            stmt
+        );
         let df_stmt = stmt.try_into().context(SqlSnafu)?;
 
         let table_provider = DfTableSourceProvider::new(

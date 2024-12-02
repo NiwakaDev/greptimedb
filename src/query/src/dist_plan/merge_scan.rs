@@ -339,6 +339,7 @@ impl ExecutionPlan for MergeScanExec {
         partition: usize,
         context: Arc<TaskContext>,
     ) -> Result<DfSendableRecordBatchStream> {
+        println!("MergeScanExec::execute");
         Ok(Box::pin(DfRecordBatchStreamAdapter::new(
             self.to_stream(context, partition)?,
         )))

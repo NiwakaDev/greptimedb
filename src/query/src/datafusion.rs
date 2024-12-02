@@ -101,6 +101,7 @@ impl DatafusionQueryEngine {
         dml: DmlStatement,
         query_ctx: QueryContextRef,
     ) -> Result<Output> {
+        println!("DatafusionQueryEngine::exec_dml_statement");
         ensure!(
             matches!(dml.op, WriteOp::InsertInto | WriteOp::Delete),
             UnsupportedExprSnafu {
@@ -120,6 +121,7 @@ impl DatafusionQueryEngine {
         let output = self
             .exec_query_plan((*dml.input).clone(), query_ctx.clone())
             .await?;
+        println!("最初のoutputは突破");
         let mut stream = match output.data {
             OutputData::RecordBatches(batches) => batches.as_stream(),
             OutputData::Stream(stream) => stream,
@@ -130,17 +132,20 @@ impl DatafusionQueryEngine {
         let mut insert_cost = 0;
 
         while let Some(batch) = stream.next().await {
+            println!("batchを初期化しようとします。, batch: {:?}", batch);
             let batch = batch.context(CreateRecordBatchSnafu)?;
+            println!("column_vectorsを作ります。");
             let column_vectors = batch
                 .column_vectors(&table_name.to_string(), table.schema())
                 .map_err(BoxedError::new)
                 .context(QueryExecutionSnafu)?;
-
+            println!("dml.opの前だよ");
             match dml.op {
                 WriteOp::InsertInto => {
                     let output = self
                         .insert(&table_name, column_vectors, query_ctx.clone())
                         .await?;
+                    println!("outputセカンド突破");
                     let (rows, cost) = output.extract_rows_and_cost();
                     affected_rows += rows;
                     insert_cost += cost;
@@ -485,6 +490,7 @@ impl QueryExecutor for DatafusionQueryEngine {
                 Ok(Box::pin(EmptyRecordBatchStream::new(schema)))
             }
             1 => {
+                println!("パーティションは1, plan: {:?}", plan);
                 let df_stream = plan
                     .execute(0, task_ctx)
                     .context(error::DatafusionSnafu)

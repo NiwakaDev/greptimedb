@@ -458,6 +458,7 @@ impl StatementExecutor {
         query_ctx: QueryContextRef,
     ) -> Result<Output> {
         let plan = self.plan(&stmt, query_ctx.clone()).await?;
+        println!("After initializing the plan");
         self.exec_plan(plan, query_ctx).await
     }
 }

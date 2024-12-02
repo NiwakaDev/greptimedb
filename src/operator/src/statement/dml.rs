@@ -25,12 +25,15 @@ use crate::error::Result;
 impl StatementExecutor {
     #[tracing::instrument(skip_all)]
     pub async fn insert(&self, insert: Box<Insert>, query_ctx: QueryContextRef) -> Result<Output> {
+        println!("StatementExecutor::insert");
         if insert.can_extract_values() {
+            println!("早い方");
             // Fast path: plain insert ("insert with literal values") is executed directly
             self.inserter
                 .handle_statement_insert(insert.as_ref(), &query_ctx)
                 .await
         } else {
+            println!("遅い方");
             // Slow path: insert with subquery. Execute using query engine.
             let statement = QueryStatement::Sql(Statement::Insert(insert));
             self.plan_exec(statement, query_ctx).await

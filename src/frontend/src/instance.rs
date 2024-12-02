@@ -265,7 +265,7 @@ impl Instance {
             }
             _ => {
                 query_interceptor.pre_execute(&stmt, None, query_ctx.clone())?;
-
+                println!("フロントエンド stmt::{:?}", stmt);
                 self.statement_executor.execute_sql(stmt, query_ctx).await
             }
         };
